@@ -1,0 +1,74 @@
+esphome:
+  name: pc-starter
+  platform: ESP8266
+  board: esp01_1m
+
+wifi:
+  ssid: <your-wifi-name>
+  password: <your-wifi-password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Pc-Starter Fallback Hotspot"
+    password: "<your-password-here>"
+
+captive_portal:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "<your-password-here>"
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO14
+      mode: INPUT
+      inverted: true
+    id: sen_power_state
+    name: "Main PC power state"
+
+switch:
+  - platform: gpio
+    id: sw_power
+    pin: GPIO5
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 100ms
+      - switch.turn_off: sw_power
+
+  - platform: gpio
+    id: sw_reset
+    pin: GPIO4
+    restore_mode: ALWAYS_OFF
+    on_turn_on:
+      - delay: 100ms
+      - switch.turn_off: sw_reset
+
+  - platform: template
+    name: "PC power switch"
+    icon: "mdi:power"
+    lambda: |-
+      if (id(sen_power_state).state) {
+        return true;
+      } else {
+        return false;
+      }
+    turn_on_action:
+      - switch.turn_on: sw_power
+
+  - platform: template
+    name: "PC reset switch"
+    icon: "mdi:power-cycle"
+    lambda: |-
+      if (id(sen_power_state).state) {
+        return false;
+      } else {
+        return true;
+      }
+    turn_off_action:
+      - switch.turn_on: sw_reset
